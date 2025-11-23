@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - HustleBase</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html"><h1>HustleBase</h1></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse</a>
+                <a href="profile.html" class="active">My Profile</a>
+                <button class="btn btn-outline" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 1rem;">
+        <div class="profile-header">
+            <h2>Provider Profile</h2>
+            <p>Create or update your service provider profile</p>
+        </div>
+
+        <form id="profileForm" class="profile-form">
+            <!-- Profile Photo -->
+            <div class="form-section">
+                <h3>Profile Photo</h3>
+                <div class="photo-upload">
+                    <div class="photo-preview" id="profilePhotoPreview">
+                        <img id="profilePhotoImg" src="" alt="Profile Photo" style="display: none;">
+                        <span id="photoPlaceholder">📷</span>
+                    </div>
+                    <input type="file" id="profilePhoto" accept="image/*" style="display: none;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('profilePhoto').click()">
+                        Upload Photo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Basic Info -->
+            <div class="form-section">
+                <h3>Basic Information</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bio">Bio / Description</label>
+                        <textarea id="bio" name="bio" rows="4" placeholder="Tell people about yourself and your services..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="skills">Skills / Services Offered</label>
+                        <input type="text" id="skills" name="skills" placeholder="e.g., Tutoring, Cleaning, Repairs" required>
+                        <small>Separate multiple skills with commas</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priceRange">Price Range</label>
+                        <input type="text" id="priceRange" name="priceRange" placeholder="e.g., $20-50/hour" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" name="location" placeholder="e.g., Downtown, Campus Area" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="availability">Availability</label>
+                        <input type="text" id="availability" name="availability" placeholder="e.g., Weekdays 9am-5pm" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactLink">Contact (WhatsApp/Phone/Email)</label>
+                        <input type="text" id="contactLink" name="contactLink" placeholder="+1234567890 or email@example.com" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Images -->
+            <div class="form-section">
+                <h3>Portfolio Images (up to 3)</h3>
+                <div class="portfolio-upload">
+                    <div class="portfolio-grid" id="portfolioGrid">
+                        <div class="portfolio-item">
+                            <div class="portfolio-preview" data-index="0">
+                                <img id="portfolioImg0" src="" alt="Portfolio" style="display: none;">
+                                <span class="portfolio-placeholder">+</span>
+                            </div>
+                            <input type="file" class="portfolio-input" data-index="0" accept="image/*" style="display: none;">
+                            <button type="button" class="btn-remove" data-index="0" style="display: none;">Remove</button>
+                        </div>
+                        <div class="portfolio-item">
+                            <div class="portfolio-preview" data-index="1">
+                                <img id="portfolioImg1" src="" alt="Portfolio" style="display: none;">
+                                <span class="portfolio-placeholder">+</span>
+                            </div>
+                            <input type="file" class="portfolio-input" data-index="1" accept="image/*" style="display: none;">
+                            <button type="button" class="btn-remove" data-index="1" style="display: none;">Remove</button>
+                        </div>
+                        <div class="portfolio-item">
+                            <div class="portfolio-preview" data-index="2">
+                                <img id="portfolioImg2" src="" alt="Portfolio" style="display: none;">
+                                <span class="portfolio-placeholder">+</span>
+                            </div>
+                            <input type="file" class="portfolio-input" data-index="2" accept="image/*" style="display: none;">
+                            <button type="button" class="btn-remove" data-index="2" style="display: none;">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <div id="successMessage" class="success-message" style="display: none;"></div>
+
+            <button type="submit" class="btn btn-primary btn-large">Save Profile</button>
+        </form>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Check auth and load profile
+        checkAuthStatus().then(() => {
+            loadProviderProfile();
+        });
+
+        // Profile photo upload
+        document.getElementById('profilePhoto').addEventListener('change', (e) => {
+            handleImagePreview(e.target.files[0], 'profilePhotoImg', 'profilePhotoPreview');
+        });
+
+        // Portfolio image uploads
+        document.querySelectorAll('.portfolio-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = e.target.dataset.index;
+                handleImagePreview(e.target.files[0], `portfolioImg${index}`, e.target.closest('.portfolio-preview'));
+                document.querySelector(`.btn-remove[data-index="${index}"]`).style.display = 'block';
+            });
+        });
+
+        // Portfolio preview clicks
+        document.querySelectorAll('.portfolio-preview').forEach(preview => {
+            preview.addEventListener('click', () => {
+                const index = preview.dataset.index;
+                document.querySelector(`.portfolio-input[data-index="${index}"]`).click();
+            });
+        });
+
+        // Remove portfolio images
+        document.querySelectorAll('.btn-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = btn.dataset.index;
+                const img = document.getElementById(`portfolioImg${index}`);
+                const input = document.querySelector(`.portfolio-input[data-index="${index}"]`);
+                img.src = '';
+                img.style.display = 'none';
+                input.value = '';
+                btn.style.display = 'none';
+            });
+        });
+
+        function handleImagePreview(file, imgId, container) {
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.getElementById(imgId);
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    if (container.id === 'profilePhotoPreview') {
+                        document.getElementById('photoPlaceholder').style.display = 'none';
+                    } else {
+                        container.querySelector('.portfolio-placeholder').style.display = 'none';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Form submission
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            try {
+                await saveProviderProfile();
+                successDiv.textContent = 'Profile saved successfully!';
+                successDiv.style.display = 'block';
+            } catch (error) {
+                errorDiv.textContent = error.message || 'Failed to save profile. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HustleBase - Find Local Services & Micro-Jobs</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>HustleBase</h1>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="active">Home</a>
+                <a href="browse.html">Browse Services</a>
+                <a href="providers.html">All Providers</a>
+                <a href="post-request.html" id="postRequestLink" style="display: none;">Post Request</a>
+                <a href="browse-requests.html" id="browseRequestsLink" style="display: none;">Browse Requests</a>
+                <a href="profile.html" id="profileLink" style="display: none;">My Profile</a>
+                <a href="#" id="dashboardLink" style="display: none;">Dashboard</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="signup.html" id="signupLink">Sign Up</a>
+                <button class="btn btn-outline" id="logoutBtn" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">HustleBase Platform</h1>
+                <p class="hero-subtitle">Connecting service providers with clients in your local community. Professional services, trusted connections.</p>
+                <div class="hero-buttons">
+                    <a href="providers.html" class="btn btn-primary btn-large"><i class="fas fa-users"></i> View All Providers</a>
+                    <a href="browse.html" class="btn btn-secondary btn-large"><i class="fas fa-search"></i> Browse Services</a>
+                    <a href="post-request.html" class="btn btn-outline btn-large" style="color: white; border-color: rgba(255,255,255,0.5);"><i class="fas fa-plus-circle"></i> Post a Request</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories">
+        <div class="container">
+            <h2 class="section-title">Popular Categories</h2>
+            <div class="categories-grid">
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-book"></i></div>
+                    <h3>Tutoring</h3>
+                    <p>Academic help and lessons</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-broom"></i></div>
+                    <h3>Cleaning</h3>
+                    <p>House and office cleaning</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-tools"></i></div>
+                    <h3>Repairs</h3>
+                    <p>Home and appliance repairs</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-cut"></i></div>
+                    <h3>Hair & Beauty</h3>
+                    <p>Salon and beauty services</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-shopping-cart"></i></div>
+                    <h3>Errands</h3>
+                    <p>Shopping and deliveries</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-palette"></i></div>
+                    <h3>Design</h3>
+                    <p>Graphics and creative work</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-laptop-code"></i></div>
+                    <h3>Tech Support</h3>
+                    <p>Computer and IT help</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-home"></i></div>
+                    <h3>Handyman</h3>
+                    <p>General maintenance work</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-utensils"></i></div>
+                    <h3>Cooking & Catering</h3>
+                    <p>Meal prep and food services</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-paw"></i></div>
+                    <h3>Pet Care</h3>
+                    <p>Dog walking and pet sitting</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-seedling"></i></div>
+                    <h3>Gardening</h3>
+                    <p>Landscaping and plant care</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-camera"></i></div>
+                    <h3>Photography</h3>
+                    <p>Photo and video services</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-pen"></i></div>
+                    <h3>Writing & Editing</h3>
+                    <p>Content and document services</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-music"></i></div>
+                    <h3>Music Lessons</h3>
+                    <p>Instrument and vocal training</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-dumbbell"></i></div>
+                    <h3>Fitness Training</h3>
+                    <p>Personal training and coaching</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-car"></i></div>
+                    <h3>Transportation</h3>
+                    <p>Rides and moving help</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-baby"></i></div>
+                    <h3>Childcare</h3>
+                    <p>Babysitting and nanny services</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-tshirt"></i></div>
+                    <h3>Sewing & Alterations</h3>
+                    <p>Clothing repairs and tailoring</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <h3>Event Planning</h3>
+                    <p>Party and event organization</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-mobile-alt"></i></div>
+                    <h3>Phone Repair</h3>
+                    <p>Mobile device fixes</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-paint-brush"></i></div>
+                    <h3>Art & Crafts</h3>
+                    <p>Custom artwork and crafts</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-box"></i></div>
+                    <h3>Packing & Moving</h3>
+                    <p>Moving assistance services</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-hammer"></i></div>
+                    <h3>Carpentry</h3>
+                    <p>Woodworking and furniture</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-hand-sparkles"></i></div>
+                    <h3>Nail Services</h3>
+                    <p>Manicure and pedicure</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-spa"></i></div>
+                    <h3>Yoga & Wellness</h3>
+                    <p>Fitness and meditation classes</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-image"></i></div>
+                    <h3>Framing</h3>
+                    <p>Picture and art framing</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-video"></i></div>
+                    <h3>Video Editing</h3>
+                    <p>Video production and editing</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-language"></i></div>
+                    <h3>Language Lessons</h3>
+                    <p>Foreign language tutoring</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-calculator"></i></div>
+                    <h3>Math Tutoring</h3>
+                    <p>Mathematics help and lessons</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-flask"></i></div>
+                    <h3>Science Tutoring</h3>
+                    <p>Science and lab help</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-briefcase"></i></div>
+                    <h3>Resume Writing</h3>
+                    <p>CV and cover letter help</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-theater-masks"></i></div>
+                    <h3>Entertainment</h3>
+                    <p>Party entertainment services</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-birthday-cake"></i></div>
+                    <h3>Baking</h3>
+                    <p>Custom cakes and desserts</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-tshirt"></i></div>
+                    <h3>Laundry Services</h3>
+                    <p>Washing and ironing</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-faucet"></i></div>
+                    <h3>Plumbing</h3>
+                    <p>Plumbing repairs and installation</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-bolt"></i></div>
+                    <h3>Electrical Work</h3>
+                    <p>Electrical repairs and wiring</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-paint-roller"></i></div>
+                    <h3>Painting</h3>
+                    <p>Interior and exterior painting</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-window-maximize"></i></div>
+                    <h3>Window Cleaning</h3>
+                    <p>Window and glass cleaning</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-car-side"></i></div>
+                    <h3>Car Washing</h3>
+                    <p>Vehicle cleaning and detailing</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-book-open"></i></div>
+                    <h3>Bookkeeping</h3>
+                    <p>Accounting and financial help</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-bullseye"></i></div>
+                    <h3>Life Coaching</h3>
+                    <p>Personal development coaching</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-hands"></i></div>
+                    <h3>Massage Therapy</h3>
+                    <p>Relaxation and therapeutic massage</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-makeup"></i></div>
+                    <h3>Makeup Services</h3>
+                    <p>Professional makeup application</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-cut"></i></div>
+                    <h3>Hair Styling</h3>
+                    <p>Haircuts and styling</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-guitar"></i></div>
+                    <h3>Piano Tuning</h3>
+                    <p>Musical instrument tuning</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-key"></i></div>
+                    <h3>Locksmith</h3>
+                    <p>Lock installation and repair</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-couch"></i></div>
+                    <h3>Furniture Assembly</h3>
+                    <p>IKEA and furniture setup</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-clipboard-list"></i></div>
+                    <h3>Administrative Help</h3>
+                    <p>Data entry and admin tasks</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-microphone"></i></div>
+                    <h3>Voice Over</h3>
+                    <p>Narration and voice work</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-code"></i></div>
+                    <h3>Web Development</h3>
+                    <p>Website creation and maintenance</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-mobile-alt"></i></div>
+                    <h3>App Development</h3>
+                    <p>Mobile app creation</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-gamepad"></i></div>
+                    <h3>Gaming Lessons</h3>
+                    <p>Video game coaching</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-swimming-pool"></i></div>
+                    <h3>Swimming Lessons</h3>
+                    <p>Swimming instruction</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-bicycle"></i></div>
+                    <h3>Bike Repair</h3>
+                    <p>Bicycle maintenance and fixes</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-paint-brush"></i></div>
+                    <h3>Face Painting</h3>
+                    <p>Event face painting services</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-gift"></i></div>
+                    <h3>Balloon Decorating</h3>
+                    <p>Party balloon arrangements</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-globe"></i></div>
+                    <h3>Translation</h3>
+                    <p>Document and text translation</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-chart-bar"></i></div>
+                    <h3>Data Analysis</h3>
+                    <p>Excel and data processing</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-couch"></i></div>
+                    <h3>Interior Design</h3>
+                    <p>Home and space design</p>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-vial"></i></div>
+                    <h3>Lab Assistance</h3>
+                    <p>Research and lab work help</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Create Account</h3>
+                    <p>Register as a service provider or client with your credentials</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Browse or Create Profile</h3>
+                    <p>Clients can search for services. Providers can create detailed profiles</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Connect & Review</h3>
+                    <p>Contact providers directly and leave reviews after service completion</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials">
+        <div class="container">
+            <h2 class="section-title">What People Say</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p class="testimonial-text">"Found an amazing tutor for my kids. The platform made it so easy!"</p>
+                    <p class="testimonial-author">- Sarah M., Parent</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p class="testimonial-text">"I've been able to grow my small business by listing my services here."</p>
+                    <p class="testimonial-author">- James K., Provider</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p class="testimonial-text">"Quick, reliable, and local. Exactly what I needed!"</p>
+                    <p class="testimonial-author">- Maria L., Client</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>HustleBase</h3>
+                    <p>Connecting communities through local services</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="browse.html">Browse Services</a></li>
+                        <li><a href="signup.html">Sign Up</a></li>
+                        <li><a href="login.html">Login</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>Email: support@hustlebase.com</p>
+                    <p>Phone: (555) 123-4567</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i> Facebook</a>
+                        <a href="#"><i class="fab fa-twitter"></i> Twitter</a>
+                        <a href="#"><i class="fab fa-instagram"></i> Instagram</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 HustleBase. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Check auth status on page load
+        checkAuthStatus();
+    </script>
+</body>
+</html>

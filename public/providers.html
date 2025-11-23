@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Service Providers - HustleBase</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html"><h1>HustleBase</h1></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse Services</a>
+                <a href="providers.html" class="active">All Providers</a>
+                <a href="profile.html" id="profileLink" style="display: none;">My Profile</a>
+                <a href="#" id="dashboardLink" style="display: none;">Dashboard</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="signup.html" id="signupLink">Sign Up</a>
+                <button class="btn btn-outline" id="logoutBtn" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 1rem;">
+        <div class="browse-header">
+            <h2>All Service Providers</h2>
+            <p>Browse our complete directory of local service providers</p>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-filters">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search providers by name, skill, or location...">
+                <button class="btn btn-primary" onclick="filterProviders()">Search</button>
+            </div>
+            
+            <div class="filters">
+                <select id="categoryFilter" onchange="filterProviders()">
+                    <option value="">All Categories</option>
+                    <option value="Tutoring">Tutoring</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Repairs">Repairs</option>
+                    <option value="Hair & Beauty">Hair & Beauty</option>
+                    <option value="Errands">Errands</option>
+                    <option value="Design">Design</option>
+                    <option value="Tech Support">Tech Support</option>
+                    <option value="Handyman">Handyman</option>
+                    <option value="Cooking & Catering">Cooking & Catering</option>
+                    <option value="Pet Care">Pet Care</option>
+                    <option value="Gardening">Gardening</option>
+                    <option value="Photography">Photography</option>
+                    <option value="Writing & Editing">Writing & Editing</option>
+                    <option value="Music Lessons">Music Lessons</option>
+                    <option value="Fitness Training">Fitness Training</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Childcare">Childcare</option>
+                    <option value="Sewing & Alterations">Sewing & Alterations</option>
+                    <option value="Event Planning">Event Planning</option>
+                    <option value="Phone Repair">Phone Repair</option>
+                    <option value="Art & Crafts">Art & Crafts</option>
+                    <option value="Packing & Moving">Packing & Moving</option>
+                    <option value="Carpentry">Carpentry</option>
+                    <option value="Nail Services">Nail Services</option>
+                    <option value="Yoga & Wellness">Yoga & Wellness</option>
+                    <option value="Framing">Framing</option>
+                    <option value="Video Editing">Video Editing</option>
+                    <option value="Language Lessons">Language Lessons</option>
+                    <option value="Math Tutoring">Math Tutoring</option>
+                    <option value="Science Tutoring">Science Tutoring</option>
+                    <option value="Resume Writing">Resume Writing</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Baking">Baking</option>
+                    <option value="Laundry Services">Laundry Services</option>
+                    <option value="Plumbing">Plumbing</option>
+                    <option value="Electrical Work">Electrical Work</option>
+                    <option value="Painting">Painting</option>
+                    <option value="Window Cleaning">Window Cleaning</option>
+                    <option value="Car Washing">Car Washing</option>
+                    <option value="Bookkeeping">Bookkeeping</option>
+                    <option value="Life Coaching">Life Coaching</option>
+                    <option value="Massage Therapy">Massage Therapy</option>
+                    <option value="Makeup Services">Makeup Services</option>
+                    <option value="Hair Styling">Hair Styling</option>
+                    <option value="Piano Tuning">Piano Tuning</option>
+                    <option value="Locksmith">Locksmith</option>
+                    <option value="Furniture Assembly">Furniture Assembly</option>
+                    <option value="Administrative Help">Administrative Help</option>
+                    <option value="Voice Over">Voice Over</option>
+                    <option value="Web Development">Web Development</option>
+                    <option value="App Development">App Development</option>
+                    <option value="Gaming Lessons">Gaming Lessons</option>
+                    <option value="Swimming Lessons">Swimming Lessons</option>
+                    <option value="Bike Repair">Bike Repair</option>
+                    <option value="Face Painting">Face Painting</option>
+                    <option value="Balloon Decorating">Balloon Decorating</option>
+                    <option value="Translation">Translation</option>
+                    <option value="Data Analysis">Data Analysis</option>
+                    <option value="Interior Design">Interior Design</option>
+                    <option value="Lab Assistance">Lab Assistance</option>
+                </select>
+
+                <select id="ratingFilter" onchange="filterProviders()">
+                    <option value="">All Ratings</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4+ Stars</option>
+                    <option value="3">3+ Stars</option>
+                </select>
+
+                <select id="locationFilter" onchange="filterProviders()">
+                    <option value="">All Locations</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div style="background: var(--card-bg); padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <strong id="providerCount">0</strong> providers available
+                </div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                    Showing <span id="showingCount">0</span> results
+                </div>
+            </div>
+        </div>
+
+        <!-- Providers Grid -->
+        <div id="providersGrid" class="providers-grid">
+            <p class="loading">Loading providers...</p>
+        </div>
+    </div>
+
+    <!-- Provider Detail Modal -->
+    <div id="providerModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeProviderModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>HustleBase</h3>
+                    <p>Connecting communities through local services</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="browse.html">Browse Services</a></li>
+                        <li><a href="providers.html">All Providers</a></li>
+                        <li><a href="signup.html">Sign Up</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>Email: support@hustlebase.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 HustleBase. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        let allProviders = [];
+        let allLocations = new Set();
+
+        checkAuthStatus();
+        loadAllProviders();
+
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterProviders();
+            }
+        });
+
+        async function loadAllProviders() {
+            const grid = document.getElementById('providersGrid');
+            grid.innerHTML = '<p class="loading">Loading providers...</p>';
+
+            // Load providers
+            const { data: providers, error } = await getSupabaseClient()
+                .from('providers')
+                .select('*');
+
+            // Load user info for providers
+            if (providers && providers.length > 0) {
+                const userIds = providers.map(p => p.user_id);
+                const { data: users } = await getSupabaseClient()
+                    .from('users')
+                    .select('id, name, email')
+                    .in('id', userIds);
+
+                const userMap = {};
+                if (users) {
+                    users.forEach(user => {
+                        userMap[user.id] = user;
+                    });
+                }
+                providers.forEach(provider => {
+                    provider.users = userMap[provider.user_id];
+                });
+            }
+
+            if (error) {
+                grid.innerHTML = `<p class="error-message">Error loading providers: ${error.message}</p>`;
+                return;
+            }
+
+            if (!providers || providers.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <p>No providers found yet. Be the first to sign up!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Load ratings for each provider
+            for (let provider of providers) {
+                const { data: reviews } = await getSupabaseClient()
+                    .from('reviews')
+                    .select('rating')
+                    .eq('provider_id', provider.user_id);
+
+                if (reviews && reviews.length > 0) {
+                    const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+                    provider.avg_rating = Math.round(avgRating * 10) / 10;
+                    provider.review_count = reviews.length;
+                } else {
+                    provider.avg_rating = 0;
+                    provider.review_count = 0;
+                }
+
+                // Collect locations
+                if (provider.location) {
+                    allLocations.add(provider.location);
+                }
+            }
+
+            allProviders = providers;
+            
+            // Populate location filter
+            const locationFilter = document.getElementById('locationFilter');
+            Array.from(allLocations).sort().forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                locationFilter.appendChild(option);
+            });
+
+            updateProviderCount();
+            displayProviders(providers);
+        }
+
+        function updateProviderCount() {
+            document.getElementById('providerCount').textContent = allProviders.length;
+        }
+
+        function displayProviders(providers) {
+            const grid = document.getElementById('providersGrid');
+            document.getElementById('showingCount').textContent = providers.length;
+            
+            if (providers.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <p>No providers match your filters. Try adjusting your search criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = providers.map(provider => {
+                const userName = provider.users?.name || 'Provider';
+                const skills = provider.skills || 'Services';
+                const rating = provider.avg_rating || 0;
+                const reviewCount = provider.review_count || 0;
+                const photo = provider.profile_img_url || 'https://via.placeholder.com/300x200?text=No+Photo';
+                const location = provider.location || 'Location not specified';
+
+                return `
+                    <div class="provider-card" onclick="showProviderDetail('${provider.user_id}')">
+                        <img src="${photo}" alt="${userName}" class="provider-photo" onerror="this.src='https://via.placeholder.com/300x200?text=No+Photo'">
+                        <div class="provider-info">
+                            <h3 class="provider-name">${userName}</h3>
+                            <p class="provider-skills">${skills}</p>
+                            <p class="provider-location">📍 ${location}</p>
+                            <p class="provider-price">${provider.price_range || 'Price on request'}</p>
+                            ${rating > 0 ? `
+                                <div class="provider-rating">
+                                    <span class="stars">${'⭐'.repeat(Math.round(rating))}</span>
+                                    <span>${rating.toFixed(1)} (${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'})</span>
+                                </div>
+                            ` : '<p class="provider-rating" style="color: var(--text-secondary); font-size: 0.85rem;">No reviews yet</p>'}
+                            <div class="provider-actions">
+                                <button class="btn btn-primary btn-view">View Profile</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterProviders() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const ratingFilter = document.getElementById('ratingFilter').value;
+            const locationFilter = document.getElementById('locationFilter').value;
+
+            let filtered = allProviders.filter(provider => {
+                // Search filter
+                const matchesSearch = !searchTerm || 
+                    provider.users?.name?.toLowerCase().includes(searchTerm) ||
+                    provider.skills?.toLowerCase().includes(searchTerm) ||
+                    provider.bio?.toLowerCase().includes(searchTerm) ||
+                    provider.location?.toLowerCase().includes(searchTerm);
+
+                // Category filter
+                const matchesCategory = !categoryFilter || 
+                    provider.skills?.toLowerCase().includes(categoryFilter.toLowerCase());
+
+                // Rating filter
+                const matchesRating = !ratingFilter || 
+                    (provider.avg_rating >= parseFloat(ratingFilter));
+
+                // Location filter
+                const matchesLocation = !locationFilter || 
+                    provider.location === locationFilter;
+
+                return matchesSearch && matchesCategory && matchesRating && matchesLocation;
+            });
+
+            displayProviders(filtered);
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Services - HustleBase</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html"><h1>HustleBase</h1></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="browse.html" class="active">Browse</a>
+                <a href="providers.html">All Providers</a>
+                <a href="profile.html" id="profileLink" style="display: none;">My Profile</a>
+                <a href="#" id="dashboardLink" style="display: none;">Dashboard</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="signup.html" id="signupLink">Sign Up</a>
+                <button class="btn btn-outline" id="logoutBtn" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 1rem;">
+        <div class="browse-header">
+            <h2>Find Local Services</h2>
+            <p>Discover skilled professionals in your community</p>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-filters">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search by name or skill...">
+                <button class="btn btn-primary" onclick="filterProviders()">Search</button>
+            </div>
+            
+            <div class="filters">
+                <select id="categoryFilter" onchange="filterProviders()">
+                    <option value="">All Categories</option>
+                    <option value="Tutoring">Tutoring</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Repairs">Repairs</option>
+                    <option value="Hair & Beauty">Hair & Beauty</option>
+                    <option value="Errands">Errands</option>
+                    <option value="Design">Design</option>
+                    <option value="Tech Support">Tech Support</option>
+                    <option value="Handyman">Handyman</option>
+                    <option value="Cooking & Catering">Cooking & Catering</option>
+                    <option value="Pet Care">Pet Care</option>
+                    <option value="Gardening">Gardening</option>
+                    <option value="Photography">Photography</option>
+                    <option value="Writing & Editing">Writing & Editing</option>
+                    <option value="Music Lessons">Music Lessons</option>
+                    <option value="Fitness Training">Fitness Training</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Childcare">Childcare</option>
+                    <option value="Sewing & Alterations">Sewing & Alterations</option>
+                    <option value="Event Planning">Event Planning</option>
+                    <option value="Phone Repair">Phone Repair</option>
+                    <option value="Art & Crafts">Art & Crafts</option>
+                    <option value="Packing & Moving">Packing & Moving</option>
+                    <option value="Carpentry">Carpentry</option>
+                    <option value="Nail Services">Nail Services</option>
+                    <option value="Yoga & Wellness">Yoga & Wellness</option>
+                    <option value="Framing">Framing</option>
+                    <option value="Video Editing">Video Editing</option>
+                    <option value="Language Lessons">Language Lessons</option>
+                    <option value="Math Tutoring">Math Tutoring</option>
+                    <option value="Science Tutoring">Science Tutoring</option>
+                    <option value="Resume Writing">Resume Writing</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Baking">Baking</option>
+                    <option value="Laundry Services">Laundry Services</option>
+                    <option value="Plumbing">Plumbing</option>
+                    <option value="Electrical Work">Electrical Work</option>
+                    <option value="Painting">Painting</option>
+                    <option value="Window Cleaning">Window Cleaning</option>
+                    <option value="Car Washing">Car Washing</option>
+                    <option value="Bookkeeping">Bookkeeping</option>
+                    <option value="Life Coaching">Life Coaching</option>
+                    <option value="Massage Therapy">Massage Therapy</option>
+                    <option value="Makeup Services">Makeup Services</option>
+                    <option value="Hair Styling">Hair Styling</option>
+                    <option value="Piano Tuning">Piano Tuning</option>
+                    <option value="Locksmith">Locksmith</option>
+                    <option value="Furniture Assembly">Furniture Assembly</option>
+                    <option value="Administrative Help">Administrative Help</option>
+                    <option value="Voice Over">Voice Over</option>
+                    <option value="Web Development">Web Development</option>
+                    <option value="App Development">App Development</option>
+                    <option value="Gaming Lessons">Gaming Lessons</option>
+                    <option value="Swimming Lessons">Swimming Lessons</option>
+                    <option value="Bike Repair">Bike Repair</option>
+                    <option value="Face Painting">Face Painting</option>
+                    <option value="Balloon Decorating">Balloon Decorating</option>
+                    <option value="Translation">Translation</option>
+                    <option value="Data Analysis">Data Analysis</option>
+                    <option value="Interior Design">Interior Design</option>
+                    <option value="Lab Assistance">Lab Assistance</option>
+                </select>
+
+                <select id="ratingFilter" onchange="filterProviders()">
+                    <option value="">All Ratings</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4+ Stars</option>
+                    <option value="3">3+ Stars</option>
+                </select>
+
+                <select id="priceFilter" onchange="filterProviders()">
+                    <option value="">All Prices</option>
+                    <option value="low">Under $30</option>
+                    <option value="medium">$30-$60</option>
+                    <option value="high">Over $60</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Providers Grid -->
+        <div id="providersGrid" class="providers-grid">
+            <p class="loading">Loading providers...</p>
+        </div>
+    </div>
+
+    <!-- Provider Detail Modal -->
+    <div id="providerModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeProviderModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        checkAuthStatus();
+        loadProviders();
+
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterProviders();
+            }
+        });
+    </script>
+</body>
+</html>
+

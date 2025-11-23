@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Job Requests - HustleBase</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html"><h1>HustleBase</h1></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse Services</a>
+                <a href="browse-requests.html" class="active">Browse Requests</a>
+                <a href="post-request.html" id="postRequestLink" style="display: none;">Post Request</a>
+                <a href="profile.html" id="profileLink" style="display: none;">My Profile</a>
+                <a href="#" id="dashboardLink" style="display: none;">Dashboard</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="signup.html" id="signupLink">Sign Up</a>
+                <button class="btn btn-outline" id="logoutBtn" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 1rem;">
+        <div class="browse-header">
+            <h2><i class="fas fa-briefcase"></i> Available Job Requests</h2>
+            <p>Browse job requests from clients and apply to work on them</p>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-filters">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search requests by title or description...">
+                <button class="btn btn-primary" onclick="filterRequests()"><i class="fas fa-search"></i> Search</button>
+            </div>
+            
+            <div class="filters">
+                <select id="categoryFilter" onchange="filterRequests()">
+                    <option value="">All Categories</option>
+                    <option value="Tutoring">Tutoring</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Repairs">Repairs</option>
+                    <option value="Photography">Photography</option>
+                    <option value="Design">Design</option>
+                    <option value="Tech Support">Tech Support</option>
+                    <option value="Handyman">Handyman</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <select id="statusFilter" onchange="filterRequests()">
+                    <option value="open">Open Requests</option>
+                    <option value="">All Status</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Requests Grid -->
+        <div id="requestsGrid" class="providers-grid">
+            <p class="loading">Loading job requests...</p>
+        </div>
+    </div>
+
+    <!-- Application Modal -->
+    <div id="applicationModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeApplicationModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        let allRequests = [];
+        let currentUser = null;
+
+        checkAuthStatus().then((user) => {
+            currentUser = user;
+            if (user) {
+                const userRole = user.user_metadata?.role || await getUserRole(user.id);
+                const postRequestLink = document.getElementById('postRequestLink');
+                if (userRole === 'client' && postRequestLink) {
+                    postRequestLink.style.display = 'block';
+                }
+            }
+            loadJobRequests();
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterRequests();
+            }
+        });
+
+        async function loadJobRequests() {
+            const grid = document.getElementById('requestsGrid');
+            grid.innerHTML = '<p class="loading">Loading job requests...</p>';
+
+            const client = getSupabaseClient();
+
+            try {
+                // Load job requests
+                const { data: requests, error: requestsError } = await client
+                    .from('job_requests')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                // Load user info for requests
+                if (requests && requests.length > 0) {
+                    const clientIds = [...new Set(requests.map(r => r.client_id))];
+                    const { data: requestUsers } = await client
+                        .from('users')
+                        .select('id, name, email')
+                        .in('id', clientIds);
+
+                    const userMap = {};
+                    if (requestUsers) {
+                        requestUsers.forEach(user => {
+                            userMap[user.id] = user;
+                        });
+                    }
+                    requests.forEach(request => {
+                        request.users = userMap[request.client_id];
+                    });
+                }
+
+                if (requestsError) throw requestsError;
+
+                if (!requests || requests.length === 0) {
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                            <p>No job requests available yet. Check back later!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Load application status for current provider
+                if (currentUser) {
+                    const { data: applications } = await client
+                        .from('job_applications')
+                        .select('job_request_id, status')
+                        .eq('provider_id', currentUser.id);
+
+                    const applicationMap = {};
+                    if (applications) {
+                        applications.forEach(app => {
+                            applicationMap[app.job_request_id] = app.status;
+                        });
+                    }
+
+                    requests.forEach(request => {
+                        request.application_status = applicationMap[request.id] || null;
+                    });
+                }
+
+                allRequests = requests;
+                displayRequests(requests);
+            } catch (error) {
+                grid.innerHTML = `<p class="error-message">Error loading requests: ${error.message}</p>`;
+            }
+        }
+
+        function displayRequests(requests) {
+            const grid = document.getElementById('requestsGrid');
+            
+            if (requests.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-search"></i></div>
+                        <p>No requests match your filters.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = requests.map(request => {
+                const clientName = request.users?.name || 'Client';
+                const statusBadge = request.status === 'open' ? 
+                    '<span style="background: var(--success); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Open</span>' :
+                    request.status === 'in_progress' ?
+                    '<span style="background: var(--warning); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">In Progress</span>' :
+                    '<span style="background: var(--text-secondary); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">' + request.status + '</span>';
+
+                const applicationStatus = request.application_status;
+                let actionButton = '';
+                
+                if (currentUser && (currentUser.user_metadata?.role === 'provider' || await getUserRole(currentUser.id) === 'provider')) {
+                    if (applicationStatus === 'accepted') {
+                        actionButton = '<button class="btn btn-primary" disabled><i class="fas fa-check"></i> Accepted</button>';
+                    } else if (applicationStatus === 'pending') {
+                        actionButton = '<button class="btn btn-secondary" disabled><i class="fas fa-clock"></i> Application Pending</button>';
+                    } else if (applicationStatus === 'rejected') {
+                        actionButton = '<button class="btn btn-outline" disabled><i class="fas fa-times"></i> Not Selected</button>';
+                    } else if (request.status === 'open') {
+                        actionButton = '<button class="btn btn-primary" onclick="showApplicationForm(\'' + request.id + '\')"><i class="fas fa-paper-plane"></i> Apply Now</button>';
+                    }
+                }
+
+                return `
+                    <div class="provider-card">
+                        <div class="provider-info">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                <h3 class="provider-name">${request.title}</h3>
+                                ${statusBadge}
+                            </div>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">${request.description}</p>
+                            <div style="display: grid; gap: 0.5rem; margin-bottom: 1rem;">
+                                <p class="provider-location"><i class="fas fa-tag"></i> ${request.category}</p>
+                                <p class="provider-location"><i class="fas fa-map-marker-alt"></i> ${request.location || 'Location not specified'}</p>
+                                <p class="provider-price"><i class="fas fa-dollar-sign"></i> Budget: ${request.budget || 'Not specified'}</p>
+                                ${request.deadline ? `<p style="color: var(--text-secondary); font-size: 0.9rem;"><i class="fas fa-calendar"></i> Deadline: ${new Date(request.deadline).toLocaleDateString()}</p>` : ''}
+                                <p style="color: var(--text-secondary); font-size: 0.85rem;"><i class="fas fa-user"></i> Posted by: ${clientName}</p>
+                                <p style="color: var(--text-secondary); font-size: 0.85rem;"><i class="fas fa-clock"></i> ${new Date(request.created_at).toLocaleDateString()}</p>
+                            </div>
+                            ${actionButton}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterRequests() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            let filtered = allRequests.filter(request => {
+                const matchesSearch = !searchTerm || 
+                    request.title?.toLowerCase().includes(searchTerm) ||
+                    request.description?.toLowerCase().includes(searchTerm);
+
+                const matchesCategory = !categoryFilter || 
+                    request.category === categoryFilter;
+
+                const matchesStatus = !statusFilter || 
+                    request.status === statusFilter;
+
+                return matchesSearch && matchesCategory && matchesStatus;
+            });
+
+            displayRequests(filtered);
+        }
+
+        async function showApplicationForm(requestId) {
+            if (!currentUser) {
+                alert('Please login to apply for jobs');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const request = allRequests.find(r => r.id === requestId);
+            if (!request) return;
+
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <h2 style="margin-bottom: 1rem;">Apply for Job</h2>
+                <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg); border-radius: 8px;">
+                    <h3 style="margin-bottom: 0.5rem;">${request.title}</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">${request.description}</p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Budget: ${request.budget || 'Not specified'}</p>
+                </div>
+                <form id="applicationForm">
+                    <div class="form-group">
+                        <label for="applicationMessage">Message to Client</label>
+                        <textarea id="applicationMessage" rows="4" placeholder="Tell the client why you're a good fit for this job..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="proposedPrice">Your Proposed Price (Optional)</label>
+                        <input type="text" id="proposedPrice" placeholder="e.g., $300 or Negotiable">
+                    </div>
+                    <div id="applicationError" class="error-message" style="display: none;"></div>
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-paper-plane"></i> Submit Application</button>
+                </form>
+            `;
+
+            document.getElementById('applicationModal').style.display = 'flex';
+
+            document.getElementById('applicationForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const errorDiv = document.getElementById('applicationError');
+                errorDiv.style.display = 'none';
+
+                const message = document.getElementById('applicationMessage').value;
+                const proposedPrice = document.getElementById('proposedPrice').value;
+
+                try {
+                    const client = getSupabaseClient();
+                    const { data, error } = await client
+                        .from('job_applications')
+                        .insert({
+                            job_request_id: requestId,
+                            provider_id: currentUser.id,
+                            message: message,
+                            proposed_price: proposedPrice || null,
+                            status: 'pending'
+                        });
+
+                    if (error) throw error;
+
+                    alert('Application submitted successfully! The client will review your application.');
+                    closeApplicationModal();
+                    loadJobRequests();
+                } catch (error) {
+                    errorDiv.textContent = error.message || 'Failed to submit application. Please try again.';
+                    errorDiv.style.display = 'block';
+                }
+            });
+        }
+
+        function closeApplicationModal() {
+            document.getElementById('applicationModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('applicationModal');
+            if (event.target === modal) {
+                closeApplicationModal();
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a Request - HustleBase</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html"><h1>HustleBase</h1></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse Services</a>
+                <a href="post-request.html" class="active">Post Request</a>
+                <a href="browse-requests.html" id="browseRequestsLink" style="display: none;">Browse Requests</a>
+                <a href="#" id="dashboardLink" style="display: none;">Dashboard</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="signup.html" id="signupLink">Sign Up</a>
+                <button class="btn btn-outline" id="logoutBtn" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 1rem;">
+        <div class="profile-header">
+            <h2><i class="fas fa-plus-circle"></i> Post a Job Request</h2>
+            <p>Describe what service you need and providers will apply</p>
+        </div>
+
+        <form id="requestForm" class="profile-form">
+            <div class="form-section">
+                <h3>Request Details</h3>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="title">Request Title</label>
+                        <input type="text" id="title" name="title" placeholder="e.g., Need a photographer for wedding" required>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="6" placeholder="Describe what you need in detail..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Service Category</label>
+                        <select id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="Tutoring">Tutoring</option>
+                            <option value="Cleaning">Cleaning</option>
+                            <option value="Repairs">Repairs</option>
+                            <option value="Photography">Photography</option>
+                            <option value="Design">Design</option>
+                            <option value="Tech Support">Tech Support</option>
+                            <option value="Handyman">Handyman</option>
+                            <option value="Cooking & Catering">Cooking & Catering</option>
+                            <option value="Pet Care">Pet Care</option>
+                            <option value="Gardening">Gardening</option>
+                            <option value="Writing & Editing">Writing & Editing</option>
+                            <option value="Music Lessons">Music Lessons</option>
+                            <option value="Fitness Training">Fitness Training</option>
+                            <option value="Transportation">Transportation</option>
+                            <option value="Childcare">Childcare</option>
+                            <option value="Event Planning">Event Planning</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" name="location" placeholder="e.g., Downtown, City Center" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="budget">Budget</label>
+                        <input type="text" id="budget" name="budget" placeholder="e.g., $200-500 or Negotiable" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deadline">Deadline (Optional)</label>
+                        <input type="date" id="deadline" name="deadline">
+                    </div>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <div id="successMessage" class="success-message" style="display: none;"></div>
+
+            <button type="submit" class="btn btn-primary btn-large"><i class="fas fa-paper-plane"></i> Post Request</button>
+        </form>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        checkAuthStatus().then((user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const userRole = user.user_metadata?.role || await getUserRole(user.id);
+            if (userRole !== 'client') {
+                alert('Only clients can post job requests. Redirecting to browse requests...');
+                window.location.href = 'browse-requests.html';
+            }
+        });
+
+        document.getElementById('requestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            const user = await getCurrentUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const requestData = {
+                client_id: user.id,
+                title: formData.get('title'),
+                description: formData.get('description'),
+                category: formData.get('category'),
+                location: formData.get('location'),
+                budget: formData.get('budget'),
+                deadline: formData.get('deadline') || null,
+                status: 'open'
+            };
+
+            try {
+                const client = getSupabaseClient();
+                const { data, error } = await client
+                    .from('job_requests')
+                    .insert(requestData)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                if (!data) throw new Error('Failed to create request');
+
+                successDiv.textContent = 'Request posted successfully! Providers can now apply.';
+                successDiv.style.display = 'block';
+                e.target.reset();
+                
+                setTimeout(() => {
+                    window.location.href = 'client-dashboard.html';
+                }, 2000);
+            } catch (error) {
+                errorDiv.textContent = error.message || 'Failed to post request. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
+

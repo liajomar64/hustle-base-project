@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.env
+.env.local
+
+# Supabase
+.supabase/
+
+# Build outputs
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Config (optional - uncomment if you want to keep keys private)
+# public/config.js
+
