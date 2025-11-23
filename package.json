@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "HustleBase - Community Micro-Jobs Platform",
   "scripts": {
-    "start": "npx serve . -p 5500",
-    "serve": "npx serve . -p 5500"
+    "start": "npx serve . -p 8080",
+    "serve": "npx serve . -p 8080"
   },
   "keywords": [
     "micro-jobs",
