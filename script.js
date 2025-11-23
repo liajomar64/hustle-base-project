@@ -1,5 +1,30 @@
 // Main Application JavaScript - Using Supabase
 
+// Mobile menu toggle function
+function toggleMobileMenu() {
+    const navLinks = document.getElementById('navLinks');
+    if (navLinks) {
+        navLinks.classList.toggle('active');
+    }
+}
+
+// Close mobile menu when clicking outside
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('click', function(event) {
+            const nav = document.querySelector('.navbar');
+            const navLinks = document.getElementById('navLinks');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (navLinks && navLinks.classList.contains('active')) {
+                if (!nav.contains(event.target)) {
+                    navLinks.classList.remove('active');
+                }
+            }
+        });
+    });
+}
+
 // Initialize Supabase client
 let supabaseClientInstance = null;
 
