@@ -225,18 +225,32 @@ async function saveProviderProfile() {
     let profileImgUrl = null;
     const profilePhoto = document.getElementById('profilePhoto').files[0];
     if (profilePhoto) {
-        const fileExt = profilePhoto.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await client.storage
-            .from('profile-photos')
-            .upload(fileName, profilePhoto, { upsert: true });
+        try {
+            const fileExt = profilePhoto.name.split('.').pop();
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+            const { data: uploadData, error: uploadError } = await client.storage
+                .from('profile-photos')
+                .upload(fileName, profilePhoto, { upsert: true });
 
-        if (uploadError) throw uploadError;
-        
-        const { data: { publicUrl } } = client.storage
-            .from('profile-photos')
-            .getPublicUrl(fileName);
-        profileImgUrl = publicUrl;
+            if (uploadError) {
+                if (uploadError.message && uploadError.message.includes('Bucket not found')) {
+                    console.warn('Storage bucket "profile-photos" not found. Please create it in Supabase Storage. Profile will be saved without photo.');
+                } else {
+                    throw uploadError;
+                }
+            } else {
+                const { data: { publicUrl } } = client.storage
+                    .from('profile-photos')
+                    .getPublicUrl(fileName);
+                profileImgUrl = publicUrl;
+            }
+        } catch (error) {
+            if (error.message && error.message.includes('Bucket not found')) {
+                console.warn('Storage bucket "profile-photos" not found. Profile will be saved without photo.');
+            } else {
+                throw error;
+            }
+        }
     }
 
     // Upload portfolio images
@@ -245,21 +259,36 @@ async function saveProviderProfile() {
     for (let i = 0; i < portfolioInputs.length; i++) {
         const file = portfolioInputs[i].files[0];
         if (file) {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user.id}/${Date.now()}_${i}.${fileExt}`;
-            const { data: uploadData, error: uploadError } = await client.storage
-                .from('portfolio-images')
-                .upload(fileName, file, { upsert: true });
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${user.id}/${Date.now()}_${i}.${fileExt}`;
+                const { data: uploadData, error: uploadError } = await client.storage
+                    .from('portfolio-images')
+                    .upload(fileName, file, { upsert: true });
 
-            if (uploadError) {
-                console.error('Error uploading portfolio image:', uploadError);
-                continue;
+                if (uploadError) {
+                    if (uploadError.message && uploadError.message.includes('Bucket not found')) {
+                        console.warn(`Storage bucket "portfolio-images" not found. Portfolio image ${i + 1} will be skipped. Please create the bucket in Supabase Storage.`);
+                        continue;
+                    } else {
+                        console.error('Error uploading portfolio image:', uploadError);
+                        continue;
+                    }
+                }
+                
+                const { data: { publicUrl } } = client.storage
+                    .from('portfolio-images')
+                    .getPublicUrl(fileName);
+                portfolioUrls.push(publicUrl);
+            } catch (error) {
+                if (error.message && error.message.includes('Bucket not found')) {
+                    console.warn(`Storage bucket "portfolio-images" not found. Portfolio image ${i + 1} will be skipped.`);
+                    continue;
+                } else {
+                    console.error('Error uploading portfolio image:', error);
+                    continue;
+                }
             }
-            
-            const { data: { publicUrl } } = client.storage
-                .from('portfolio-images')
-                .getPublicUrl(fileName);
-            portfolioUrls.push(publicUrl);
         }
     }
 
@@ -319,8 +348,40 @@ async function saveProviderProfile() {
         if (error) throw error;
     }
 
-    alert('Profile saved successfully!');
-    window.location.href = 'provider-dashboard.html';
+    // Show success message with storage bucket info if needed
+    const successDiv = document.getElementById('successMessage');
+    const errorDiv = document.getElementById('errorMessage');
+    
+    let successMessage = 'Profile saved successfully!';
+    let hasStorageWarning = false;
+    let warningMessage = '';
+    
+    if (profilePhoto && !profileImgUrl) {
+        hasStorageWarning = true;
+        warningMessage += 'Profile photo could not be uploaded (storage bucket missing). ';
+    }
+    if (portfolioInputs.length > 0 && portfolioUrls.length === 0 && Array.from(portfolioInputs).some(input => input.files[0])) {
+        hasStorageWarning = true;
+        warningMessage += 'Portfolio images could not be uploaded (storage bucket missing). ';
+    }
+    
+    if (hasStorageWarning) {
+        warningMessage += 'Please create "profile-photos" and "portfolio-images" buckets in Supabase Storage to enable image uploads.';
+        if (errorDiv) {
+            errorDiv.textContent = warningMessage;
+            errorDiv.style.display = 'block';
+        }
+    }
+    
+    if (successDiv) {
+        successDiv.textContent = successMessage;
+        successDiv.style.display = 'block';
+    }
+    
+    // Redirect after a short delay to show messages
+    setTimeout(() => {
+        window.location.href = 'provider-dashboard.html';
+    }, hasStorageWarning ? 3000 : 1500);
 }
 
 async function loadProviderProfile() {

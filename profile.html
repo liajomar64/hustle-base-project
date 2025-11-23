@@ -200,11 +200,20 @@
 
             try {
                 await saveProviderProfile();
-                successDiv.textContent = 'Profile saved successfully!';
-                successDiv.style.display = 'block';
+                // Success message is shown in saveProviderProfile function
             } catch (error) {
-                errorDiv.textContent = error.message || 'Failed to save profile. Please try again.';
+                let errorMessage = error.message || 'Failed to save profile. Please try again.';
+                
+                // Provide helpful message for bucket errors
+                if (error.message && error.message.includes('Bucket not found')) {
+                    errorMessage = 'Storage buckets not found. Please create "profile-photos" and "portfolio-images" buckets in Supabase Storage. Your profile will be saved without images.';
+                }
+                
+                errorDiv.textContent = errorMessage;
                 errorDiv.style.display = 'block';
+                
+                // Scroll to error message
+                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         });
     </script>
