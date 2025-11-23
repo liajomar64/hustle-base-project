@@ -1,14 +1,30 @@
 // Main Application JavaScript - Using Supabase
 
 // Initialize Supabase client
+let supabaseClientInstance = null;
+
 function getSupabaseClient() {
-    if (typeof supabase === 'undefined' || !supabase) {
-        if (typeof window.supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
-            return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-        throw new Error('Supabase client not initialized. Please check your configuration.');
+    // Return cached client if available
+    if (supabaseClientInstance) {
+        return supabaseClientInstance;
     }
-    return supabase;
+    
+    // Check if client was initialized in config.js
+    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        supabaseClientInstance = supabaseClient;
+        return supabaseClientInstance;
+    }
+    
+    // Fallback: try to create client directly
+    if (typeof window !== 'undefined' && window.supabase) {
+        if (typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_ANON_KEY !== 'undefined' && 
+            SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+            supabaseClientInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            return supabaseClientInstance;
+        }
+    }
+    
+    throw new Error('Supabase client not initialized. Please check your configuration in config.js and ensure SUPABASE_URL and SUPABASE_ANON_KEY are set.');
 }
 
 // Authentication Functions
