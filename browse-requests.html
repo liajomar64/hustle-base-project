@@ -87,7 +87,7 @@
         let allRequests = [];
         let currentUser = null;
 
-        checkAuthStatus().then((user) => {
+        checkAuthStatus().then(async (user) => {
             currentUser = user;
             if (user) {
                 const userRole = user.user_metadata?.role || await getUserRole(user.id);
@@ -175,7 +175,7 @@
             }
         }
 
-        function displayRequests(requests) {
+        async function displayRequests(requests) {
             const grid = document.getElementById('requestsGrid');
             
             if (requests.length === 0) {
@@ -186,6 +186,16 @@
                     </div>
                 `;
                 return;
+            }
+
+            // Check if current user is provider
+            let isProvider = false;
+            if (currentUser) {
+                isProvider = currentUser.user_metadata?.role === 'provider';
+                if (!isProvider) {
+                    const role = await getUserRole(currentUser.id);
+                    isProvider = role === 'provider';
+                }
             }
 
             grid.innerHTML = requests.map(request => {
@@ -199,7 +209,7 @@
                 const applicationStatus = request.application_status;
                 let actionButton = '';
                 
-                if (currentUser && (currentUser.user_metadata?.role === 'provider' || await getUserRole(currentUser.id) === 'provider')) {
+                if (isProvider) {
                     if (applicationStatus === 'accepted') {
                         actionButton = '<button class="btn btn-primary" disabled><i class="fas fa-check"></i> Accepted</button>';
                     } else if (applicationStatus === 'pending') {
@@ -234,7 +244,7 @@
             }).join('');
         }
 
-        function filterRequests() {
+        async function filterRequests() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const categoryFilter = document.getElementById('categoryFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
@@ -253,7 +263,7 @@
                 return matchesSearch && matchesCategory && matchesStatus;
             });
 
-            displayRequests(filtered);
+            await displayRequests(filtered);
         }
 
         async function showApplicationForm(requestId) {

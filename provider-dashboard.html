@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provider Dashboard - HustleBase</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html"><h1>HustleBase</h1></a>
+            </div>
+            <div class="nav-links">
+                <a href="browse.html">Browse Services</a>
+                <a href="browse-requests.html">Browse Requests</a>
+                <a href="profile.html">My Profile</a>
+                <a href="provider-dashboard.html" class="active">Dashboard</a>
+                <button class="btn btn-outline" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container dashboard">
+        <div class="dashboard-header">
+            <h1>Provider Dashboard</h1>
+            <p>Manage your profile, applications, and reviews</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3><span class="dashboard-card-icon"><i class="fas fa-briefcase"></i></span> Applications Sent</h3>
+                <div class="dashboard-stat" id="applicationsSent">0</div>
+                <div class="dashboard-stat-label">Job applications you've submitted</div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="dashboard-card-icon"><i class="fas fa-star"></i></span> Reviews Received</h3>
+                <div class="dashboard-stat" id="reviewsReceived">0</div>
+                <div class="dashboard-stat-label">Reviews from clients</div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="dashboard-card-icon"><i class="fas fa-check-circle"></i></span> Accepted Jobs</h3>
+                <div class="dashboard-stat" id="acceptedJobs">0</div>
+                <div class="dashboard-stat-label">Jobs you've been accepted for</div>
+            </div>
+        </div>
+
+        <div class="dashboard-actions">
+            <a href="profile.html" class="btn btn-primary"><i class="fas fa-user-edit"></i> Edit Profile</a>
+            <a href="browse-requests.html" class="btn btn-secondary"><i class="fas fa-search"></i> Browse Requests</a>
+            <a href="providers.html" class="btn btn-outline">View All Providers</a>
+        </div>
+
+        <!-- My Applications -->
+        <div class="dashboard-card" style="margin-top: 2rem;">
+            <h3><span class="dashboard-card-icon"><i class="fas fa-file-alt"></i></span> My Applications</h3>
+            <div id="myApplications" style="margin-top: 1.5rem;">
+                <p class="loading">Loading your applications...</p>
+            </div>
+        </div>
+
+        <!-- Reviews Received -->
+        <div class="dashboard-card" style="margin-top: 2rem;">
+            <h3><span class="dashboard-card-icon"><i class="fas fa-star"></i></span> Reviews Received</h3>
+            <div id="reviewsReceivedList" style="margin-top: 1.5rem;">
+                <p class="loading">Loading reviews...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        checkAuthStatus().then(async () => {
+            await loadProviderDashboard();
+        });
+
+        async function loadProviderDashboard() {
+            const user = await getCurrentUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Check if user is provider
+            const userRole = user.user_metadata?.role || await getUserRole(user.id);
+            if (userRole !== 'provider') {
+                window.location.href = 'client-dashboard.html';
+                return;
+            }
+
+            const client = getSupabaseClient();
+
+            // Load applications
+            const { data: applications, error: applicationsError } = await client
+                .from('job_applications')
+                .select('*, job_requests(*)')
+                .eq('provider_id', user.id)
+                .order('created_at', { ascending: false });
+
+            const applicationsList = applications || [];
+            document.getElementById('applicationsSent').textContent = applicationsList.length;
+
+            // Count accepted applications
+            const acceptedCount = applicationsList.filter(app => app.status === 'accepted').length;
+            document.getElementById('acceptedJobs').textContent = acceptedCount;
+
+            // Load job request details for applications
+            if (applicationsList.length > 0) {
+                const requestIds = [...new Set(applicationsList.map(a => a.job_request_id))];
+                const { data: requests } = await client
+                    .from('job_requests')
+                    .select('*')
+                    .in('id', requestIds);
+
+                const requestMap = {};
+                if (requests) {
+                    requests.forEach(req => {
+                        requestMap[req.id] = req;
+                    });
+                }
+
+                // Load client info for requests
+                if (requests && requests.length > 0) {
+                    const clientIds = [...new Set(requests.map(r => r.client_id))];
+                    const { data: clients } = await client
+                        .from('users')
+                        .select('id, name')
+                        .in('id', clientIds);
+
+                    const clientMap = {};
+                    if (clients) {
+                        clients.forEach(c => {
+                            clientMap[c.id] = c;
+                        });
+                    }
+
+                    requests.forEach(req => {
+                        req.client = clientMap[req.client_id];
+                    });
+                }
+
+                applicationsList.forEach(app => {
+                    app.job_request = requestMap[app.job_request_id];
+                });
+            }
+
+            // Display applications
+            if (applicationsList.length > 0) {
+                const applicationsHtml = applicationsList.map(app => {
+                    const request = app.job_request;
+                    const clientName = request?.client?.name || 'Client';
+                    const statusColor = app.status === 'accepted' ? 'var(--success)' : 
+                                      app.status === 'rejected' ? 'var(--danger)' : 
+                                      'var(--warning)';
+                    
+                    return `
+                        <div class="review-item" style="margin-bottom: 1rem;">
+                            <div class="review-header">
+                                <span class="review-author">${request?.title || 'Job Request'}</span>
+                                <span style="background: ${statusColor}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; text-transform: capitalize;">${app.status}</span>
+                            </div>
+                            <p class="review-comment">${app.message || 'No message'}</p>
+                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                                <span><i class="fas fa-user"></i> Client: ${clientName}</span>
+                                ${app.proposed_price ? `<span><i class="fas fa-dollar-sign"></i> Proposed: ${app.proposed_price}</span>` : ''}
+                                <span><i class="fas fa-calendar"></i> ${new Date(app.created_at).toLocaleDateString()}</span>
+                            </div>
+                            ${request ? `<p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">${request.description.substring(0, 100)}${request.description.length > 100 ? '...' : ''}</p>` : ''}
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('myApplications').innerHTML = applicationsHtml;
+            } else {
+                document.getElementById('myApplications').innerHTML = '<p style="color: var(--text-secondary);">You haven\'t applied to any jobs yet. <a href="browse-requests.html" style="color: var(--primary);">Browse available requests!</a></p>';
+            }
+
+            // Load reviews received
+            const { data: reviews, error: reviewsError } = await client
+                .from('reviews')
+                .select('*')
+                .eq('provider_id', user.id)
+                .order('created_at', { ascending: false });
+
+            const reviewsList = reviews || [];
+            document.getElementById('reviewsReceived').textContent = reviewsList.length;
+
+            // Load client info for reviews
+            if (reviewsList.length > 0) {
+                const clientIds = [...new Set(reviewsList.map(r => r.client_id))];
+                const { data: clients } = await client
+                    .from('users')
+                    .select('id, name')
+                    .in('id', clientIds);
+
+                const clientMap = {};
+                if (clients) {
+                    clients.forEach(c => {
+                        clientMap[c.id] = c;
+                    });
+                }
+
+                reviewsList.forEach(review => {
+                    review.client = clientMap[review.client_id];
+                });
+            }
+
+            // Display reviews
+            if (reviewsList.length > 0) {
+                const reviewsHtml = reviewsList.map(review => {
+                    const clientName = review.client?.name || 'Anonymous';
+                    return `
+                        <div class="review-item" style="margin-bottom: 1rem;">
+                            <div class="review-header">
+                                <span class="review-author">Review from: ${clientName}</span>
+                                <span class="stars">${'⭐'.repeat(review.rating)}</span>
+                            </div>
+                            <p class="review-comment">${review.comment || 'No comment'}</p>
+                            <small style="color: var(--text-secondary);">${new Date(review.created_at).toLocaleDateString()}</small>
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('reviewsReceivedList').innerHTML = reviewsHtml;
+            } else {
+                document.getElementById('reviewsReceivedList').innerHTML = '<p style="color: var(--text-secondary);">You haven\'t received any reviews yet. Keep providing great service!</p>';
+            }
+        }
+    </script>
+</body>
+</html>
+

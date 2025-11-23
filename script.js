@@ -19,8 +19,23 @@ function getSupabaseClient() {
     if (typeof window !== 'undefined' && window.supabase) {
         if (typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_ANON_KEY !== 'undefined' && 
             SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
-            supabaseClientInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            return supabaseClientInstance;
+            try {
+                supabaseClientInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                return supabaseClientInstance;
+            } catch (error) {
+                console.error('Error creating Supabase client:', error);
+                throw new Error('Failed to create Supabase client. Please check your configuration.');
+            }
+        }
+    }
+    
+    // Try to initialize from config.js if function exists
+    if (typeof initializeSupabaseClient === 'function') {
+        if (initializeSupabaseClient()) {
+            if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                supabaseClientInstance = supabaseClient;
+                return supabaseClientInstance;
+            }
         }
     }
     
