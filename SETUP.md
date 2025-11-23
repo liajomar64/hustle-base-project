@@ -34,6 +34,13 @@ Follow these steps to get HustleBase up and running in minutes.
    - Click **Run** (or press Ctrl+Enter)
    - You should see "Success" message
 
+2. **Fix RLS Policies (if you get "row-level security policy" errors)**
+   - If you encounter RLS errors when saving profiles, run `supabase/fix-rls-policies.sql`
+   - This will recreate the Row Level Security policies correctly
+   - Go to **SQL Editor** → **New Query**
+   - Copy and paste the contents of `supabase/fix-rls-policies.sql`
+   - Click **Run**
+
 ## Step 3: Storage Setup (2 minutes)
 
 1. **Create Storage Buckets**

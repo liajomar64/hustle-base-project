@@ -2,8 +2,8 @@
 // Replace these with your actual Supabase project credentials
 // Get them from: Supabase Dashboard > Settings > API
 
-const SUPABASE_URL = 'https://yimkfujzofljrzedpngp.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbWtmdWp6b2ZsanJ6ZWRwbmdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MTA1ODksImV4cCI6MjA3OTQ4NjU4OX0.p3339onP80q6vl8rwKMLK6LyOLhXv93VctysSTh9GLk';
+const SUPABASE_URL = 'https://xvgotucpsuuhjsjjmnzp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2Z290dWNwc3V1aGpzamptbnpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MzIxMTcsImV4cCI6MjA3OTUwODExN30.8v1O8sAlAejhNZ6yo3wQgYnVysGzfYz5zwROeiwGmw4';
 
 // Initialize Supabase client (will be set when Supabase library loads)
 let supabaseClient = null;

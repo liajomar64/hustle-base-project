@@ -215,9 +215,22 @@ async function getUserRole(userId) {
 // Provider Profile Functions
 async function saveProviderProfile() {
     const user = await getCurrentUser();
-    if (!user) throw new Error('You must be logged in');
+    if (!user) {
+        throw new Error('You must be logged in to save your profile');
+    }
 
     const client = getSupabaseClient();
+    
+    // Verify user is authenticated and get fresh session
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) {
+        throw new Error('Session expired. Please log in again.');
+    }
+    
+    // Ensure user.id matches the authenticated user
+    if (user.id !== session.user.id) {
+        throw new Error('User authentication mismatch. Please log in again.');
+    }
     const form = document.getElementById('profileForm');
     const formData = new FormData(form);
 
@@ -324,7 +337,13 @@ async function saveProviderProfile() {
             .from('providers')
             .insert(providerData);
         
-        if (error) throw error;
+        if (error) {
+            // Provide helpful error message for RLS issues
+            if (error.message && error.message.includes('row-level security')) {
+                throw new Error('Permission denied. Please ensure you are logged in and the database policies are set up correctly. See SETUP.md for instructions.');
+            }
+            throw error;
+        }
     }
 
     // Save portfolio images
