@@ -85,19 +85,32 @@ async function signUp(data) {
 
     if (error) throw error;
     
-    // User profile is created automatically by trigger, but we can also create it explicitly
+    // User profile is created automatically by trigger, but we ensure it exists
     if (user) {
-        const { error: profileError } = await client
-            .from('users')
-            .insert({
-                id: user.id,
-                name: data.name,
-                email: data.email,
-                role: data.role
-            });
+        // Wait a moment for the trigger to potentially create the user
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        if (profileError && !profileError.message.includes('duplicate')) {
-            console.error('Error creating user profile:', profileError);
+        // Check if user exists, if not create it
+        const { data: existingUser } = await client
+            .from('users')
+            .select('id')
+            .eq('id', user.id)
+            .single();
+        
+        if (!existingUser) {
+            const { error: profileError } = await client
+                .from('users')
+                .insert({
+                    id: user.id,
+                    name: data.name,
+                    email: data.email,
+                    role: data.role
+                });
+            
+            if (profileError && !profileError.message.includes('duplicate') && !profileError.message.includes('unique')) {
+                console.error('Error creating user profile:', profileError);
+                // Don't throw here - user can still sign in and profile can be created later
+            }
         }
     }
     
@@ -231,6 +244,33 @@ async function saveProviderProfile() {
     if (user.id !== session.user.id) {
         throw new Error('User authentication mismatch. Please log in again.');
     }
+    
+    // Ensure user exists in users table (create if missing)
+    const { data: existingUser, error: userCheckError } = await client
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+    
+    if (userCheckError || !existingUser) {
+        // User doesn't exist in users table, create it
+        const { error: createUserError } = await client
+            .from('users')
+            .insert({
+                id: user.id,
+                name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+                email: user.email,
+                role: user.user_metadata?.role || 'provider'
+            });
+        
+        if (createUserError) {
+            // If it's a duplicate key error, that's okay - user was created between check and insert
+            if (!createUserError.message.includes('duplicate') && !createUserError.message.includes('unique')) {
+                throw new Error('Failed to create user profile. Please try signing up again or contact support.');
+            }
+        }
+    }
+    
     const form = document.getElementById('profileForm');
     const formData = new FormData(form);
 
@@ -338,9 +378,12 @@ async function saveProviderProfile() {
             .insert(providerData);
         
         if (error) {
-            // Provide helpful error message for RLS issues
+            // Provide helpful error messages for common issues
             if (error.message && error.message.includes('row-level security')) {
                 throw new Error('Permission denied. Please ensure you are logged in and the database policies are set up correctly. See SETUP.md for instructions.');
+            }
+            if (error.message && error.message.includes('foreign key constraint')) {
+                throw new Error('User profile not found. Please try logging out and logging back in, or contact support.');
             }
             throw error;
         }
@@ -807,18 +850,35 @@ function setRating(rating) {
 
 async function submitReview(event, providerId) {
     event.preventDefault();
+    
+    const client = getSupabaseClient();
+    
+    // Get current user and verify session
     const user = await getCurrentUser();
     if (!user) {
         alert('Please login to leave a review');
         return;
     }
 
-    if (user.id === providerId) {
+    // Verify session to ensure auth.uid() matches
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) {
+        alert('Session expired. Please log in again.');
+        return;
+    }
+
+    // Ensure user.id matches authenticated user
+    const authenticatedUserId = session.user.id;
+    if (user.id !== authenticatedUserId) {
+        alert('Authentication mismatch. Please log in again.');
+        return;
+    }
+
+    if (authenticatedUserId === providerId) {
         alert('You cannot review your own profile');
         return;
     }
 
-    const client = getSupabaseClient();
     const rating = parseInt(document.getElementById('selectedRating').value);
     const comment = document.getElementById('reviewComment').value;
 
@@ -832,7 +892,7 @@ async function submitReview(event, providerId) {
         .from('reviews')
         .select('id')
         .eq('provider_id', providerId)
-        .eq('client_id', user.id)
+        .eq('client_id', authenticatedUserId)
         .single();
 
     if (existingReview) {
@@ -841,16 +901,60 @@ async function submitReview(event, providerId) {
     }
 
     try {
+        // Ensure user exists in users table
+        const { data: userRecord, error: userCheckError } = await client
+            .from('users')
+            .select('id')
+            .eq('id', authenticatedUserId)
+            .single();
+        
+        if (userCheckError || !userRecord) {
+            // User doesn't exist, create it
+            const { error: createUserError } = await client
+                .from('users')
+                .insert({
+                    id: authenticatedUserId,
+                    name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                    email: session.user.email,
+                    role: session.user.user_metadata?.role || 'client'
+                });
+            
+            if (createUserError && !createUserError.message.includes('duplicate') && !createUserError.message.includes('unique')) {
+                throw new Error('Failed to create user profile. Please try signing up again.');
+            }
+        }
+        
+        // Verify provider exists in providers table
+        const { data: providerRecord, error: providerCheckError } = await client
+            .from('providers')
+            .select('user_id')
+            .eq('user_id', providerId)
+            .single();
+        
+        if (providerCheckError || !providerRecord) {
+            throw new Error('Provider profile not found. This provider may not have completed their profile setup.');
+        }
+        
+        // Insert review with authenticated user ID
         const { error } = await client
             .from('reviews')
             .insert({
                 provider_id: providerId,
-                client_id: user.id,
+                client_id: authenticatedUserId, // Use authenticated user ID from session
                 rating: rating,
                 comment: comment
             });
 
-        if (error) throw error;
+        if (error) {
+            // Provide helpful error messages
+            if (error.message && error.message.includes('row-level security')) {
+                throw new Error('Permission denied. Please ensure you are logged in and try again.');
+            }
+            if (error.message && error.message.includes('foreign key')) {
+                throw new Error('Invalid provider or user. Please refresh the page and try again.');
+            }
+            throw error;
+        }
 
         alert('Review submitted successfully!');
         closeProviderModal();

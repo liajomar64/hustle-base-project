@@ -158,7 +158,16 @@ CREATE POLICY "Anyone can view reviews" ON reviews
     FOR SELECT USING (true);
 
 CREATE POLICY "Authenticated users can create reviews" ON reviews
-    FOR INSERT WITH CHECK (auth.uid() = client_id AND auth.uid() != provider_id);
+    FOR INSERT 
+    WITH CHECK (
+        auth.uid() IS NOT NULL 
+        AND auth.uid() = client_id 
+        AND auth.uid() != provider_id
+        AND EXISTS (
+            SELECT 1 FROM providers 
+            WHERE providers.user_id = reviews.provider_id
+        )
+    );
 
 CREATE POLICY "Users can update own reviews" ON reviews
     FOR UPDATE USING (auth.uid() = client_id);
